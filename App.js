@@ -1,18 +1,16 @@
+import React from 'react';
+import { Provider, useSelector } from 'react-redux';
+import { store } from './src/redux/store';
+import { Ionicons } from '@expo/vector-icons';
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { CategoryScreen } from "./src/Screen/ProductsCategory";
 import { Products } from "./src/Screen/Products";
 import { Cart } from "./src/Screen/Cart";
-import { Ionicons } from '@expo/vector-icons';
-
-// This is for navigation part
-import { NavigationContainer } from "@react-navigation/native";
-import { createStackNavigator } from "@react-navigation/stack";
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import ProductDetail from "./src/Screen/ProductDetails";
 
-
 // Create navigators
-const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
 const Tabs = createBottomTabNavigator();
 
@@ -26,39 +24,39 @@ function HomeStackNavigator() {
   );
 }
 
-// Configure the Tabs as the main navigator
-function App() {
-  const num = 3
+function TabsNavigator() {
+  const cartQuantity = useSelector(state => state.cart.totalQuantity); // Correctly placed useSelector
 
   return (
-    <NavigationContainer>
-      <Tabs.Navigator>
-        <Tabs.Screen name="Productss" component={HomeStackNavigator} options={{
-          tabBarIcon: ()=>(<Ionicons name ="home"/>)
-        }}/>
-        <Tabs.Screen name="My Cart" component={Cart} options={{
-          tabBarIcon:({size,color})=>(
-            <Ionicons name="cart-outline" color={color} size={size} />
-          ),
-          tabBarBadge: num || undefined,
-        }}/>
-      </Tabs.Navigator>
-    </NavigationContainer>
+    <Tabs.Navigator>
+      <Tabs.Screen name="Products" component={HomeStackNavigator} options={{
+        tabBarIcon: ({ color, size }) => (
+          <Ionicons name="home" color={color} size={size} />
+        ),
+      }} />
+      <Tabs.Screen 
+  name="Shopping Cart" 
+  component={Cart} 
+  options={{
+    tabBarIcon: ({ color, size }) => (
+      <Ionicons name="cart-outline" color={color} size={size} />
+    ),
+    tabBarBadge: cartQuantity > 0 ? cartQuantity : undefined
+  }}
+/>
+
+    </Tabs.Navigator>
+  );
+}
+
+function App() {
+  return (
+    <Provider store={store}>
+      <NavigationContainer>
+        <TabsNavigator />
+      </NavigationContainer>
+    </Provider>
   );
 }
 
 export default App;
-
-/*
-// Drawer Navigator - root of the app
-function App() {
-  return (
-    <NavigationContainer>
-      <Drawer.Navigator>
-        <Drawer.Screen name="Home" component={HomePage} />
-        <Drawer.Screen name="Products" component={ProductsStackNavigator} />
-      </Drawer.Navigator>
-    </NavigationContainer>
-  );
-}
-*/
