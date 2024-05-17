@@ -51,6 +51,7 @@ export function CategoryScreen() {
 const styles = StyleSheet.create({
     screen: {
         flex: 1,
+        padding:20,
         backgroundColor: '#f4f4f4',
     },
     container: {

@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { Title } from '../component/Title';
 import { Platform } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 
 const server = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 const url = `http://${server}:3000`;
@@ -15,35 +16,38 @@ function MyOrders() {
   const [expandedOrders, setExpandedOrders] = useState({});
   const [expandedSections, setExpandedSections] = useState({});
   const user = useSelector(state => state.user);
+  const isFocused = useIsFocused();
+
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch(`${url}/orders/all`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${user.token}` },
+      });
+      const data = await response.json();
+
+      if (data.status === 'OK') {
+        const parsedOrders = data.orders.map(order => ({
+          ...order,
+          order_items: JSON.parse(order.order_items)
+        }));
+        setOrders(parsedOrders);
+      } else {
+        Alert.alert('Error', data.message || 'Failed to fetch orders.');
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error.message);
+      Alert.alert('Error', 'Failed to fetch orders.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = await fetch(`${url}/orders/all`, {
-          method: 'GET',
-          headers: { 'Authorization': `Bearer ${user.token}` },
-        });
-        const data = await response.json();
-
-        if (data.status === 'OK') {
-          const parsedOrders = data.orders.map(order => ({
-            ...order,
-            order_items: JSON.parse(order.order_items)
-          }));
-          setOrders(parsedOrders);
-        } else {
-          Alert.alert('Error', data.message || 'Failed to fetch orders.');
-        }
-      } catch (error) {
-        console.error('Error fetching orders:', error.message);
-        Alert.alert('Error', 'Failed to fetch orders.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOrders();
-  }, [user.token]);
+    if (isFocused) {
+      fetchOrders();
+    }
+  }, [isFocused, user.token]);
 
   const updateOrderStatus = async (orderId, isPaid, isDelivered) => {
     try {

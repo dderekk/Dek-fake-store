@@ -5,12 +5,16 @@ const initialState = {
   totalQuantity: 0,
   totalAmount: 0,
   status: 'idle',
+  error: null,
 };
 
 export const fetchCart = createAsyncThunk('cart/fetchCart', async (userId, { rejectWithValue }) => {
   try {
     const response = await fetch(`http://localhost:3000/cart/${userId}`);
     const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to fetch cart');
+    }
     return data;
   } catch (error) {
     return rejectWithValue(error.message);
@@ -25,6 +29,9 @@ export const updateCart = createAsyncThunk('cart/updateCart', async ({ userId, c
       body: JSON.stringify(cart),
     });
     const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to update cart');
+    }
     return data;
   } catch (error) {
     return rejectWithValue(error.message);
@@ -81,6 +88,19 @@ const cartSlice = createSlice({
         state.totalAmount = action.payload.totalAmount;
       })
       .addCase(fetchCart.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+      })
+      .addCase(updateCart.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(updateCart.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.items = action.payload.items;
+        state.totalQuantity = action.payload.totalQuantity;
+        state.totalAmount = action.payload.totalAmount;
+      })
+      .addCase(updateCart.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
       });

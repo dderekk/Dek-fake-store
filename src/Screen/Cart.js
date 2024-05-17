@@ -107,8 +107,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
   },
   center: {
+    padding:20,
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
   },
   emptyMessage: {

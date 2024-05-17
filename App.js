@@ -22,7 +22,7 @@ const Tabs = createBottomTabNavigator();
 
 function HomeStackNavigator() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={CategoryScreen} />
       <Stack.Screen name="Products" component={Products} />
       <Stack.Screen name="ProductDetail" component={ProductDetail} />
@@ -32,7 +32,7 @@ function HomeStackNavigator() {
 
 function AuthStackNavigator() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="SignIn" component={SignIn} />
       <Stack.Screen name="SignUp" component={SignUp} />
     </Stack.Navigator>
@@ -65,7 +65,7 @@ function TabsNavigator() {
   const newOrdersCount = orders.filter(order => order.status === 'new').length;
 
   return (
-    <Tabs.Navigator>
+    <Tabs.Navigator screenOptions={{ headerShown: false }}>
       <Tabs.Screen 
         name="Products" 
         component={HomeStackNavigator} 
@@ -96,7 +96,7 @@ function TabsNavigator() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="cart-outline" color={color} size={size} />
           ),
-          tabBarBadge: cartQuantity > 0 ? cartQuantity : undefined
+          tabBarBadge: user.isLoggedIn && cartQuantity > 0 ? cartQuantity : undefined
         }}
       />
       <Tabs.Screen 
@@ -140,3 +140,4 @@ function App() {
 }
 
 export default App;
+
