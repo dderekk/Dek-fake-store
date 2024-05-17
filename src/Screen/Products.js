@@ -1,62 +1,70 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, Text, Image, TouchableOpacity } from 'react-native';
-
+import React, { useEffect } from 'react';
+import { StyleSheet, View, Text, Image, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from "@react-navigation/native";
-
 import { ButtonPrototype } from '../component/ButtonPrototype';
 import { Title } from '../component/Title';
+import { fetchProductsByCategory } from '../redux/productSlice';
 
-export function Products({ route }) { 
-  const [productData, setProductData] = useState([]);
+export function Products({ route }) {
+  const dispatch = useDispatch();
   const navigation = useNavigation();
+  const category = route.params?.category;
+  const productState = useSelector(state => state.products);
+  const productData = productState.data[category] || [];
+  const loading = productState.status === 'loading';
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      if (route.params?.category) {
-        try {
-          const res = await fetch(`https://fakestoreapi.com/products/category/${route.params.category}`);
-          const data = await res.json();
-          setProductData(data); 
-        } catch (e) {
-          console.error('Error in fetchData:', e.message);
-        }
-      }
-    };
+    if (category && !productData.length) {
+      dispatch(fetchProductsByCategory(category));
+    }
+  }, [category, productData.length, dispatch]);
 
-    fetchProducts(); 
-  }, [route.params?.category]);
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      key={item.id}
+      style={styles.productCard}
+      onPress={() => navigation.navigate('ProductDetail', { product: item })}
+    >
+      <Image source={{ uri: item.image }} style={styles.productImage} />
+      <View style={styles.productInfo}>
+        <Text style={styles.productTitle}>{item.title}</Text>
+        <Text style={styles.productPrice}>${item.price}</Text>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {productData.map((product) => (
-        <TouchableOpacity
-          key={product.id}
-          style={styles.productCard}
-          onPress={() => navigation.navigate('ProductDetail', { product })}
-        >
-          <Image source={{ uri: product.image }} style={styles.productImage} />
-          <View style={styles.productInfo}>
-            <Text style={styles.productTitle}>{product.title}</Text>
-            <Text style={styles.productPrice}>${product.price}</Text>
-          </View>
-        </TouchableOpacity>
-      ))}
+    <View style={styles.screen}>
+      <Title text={category ? category.toUpperCase() : 'Products'} style={styles.title} />
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <FlatList
+          data={productData}
+          renderItem={renderItem}
+          keyExtractor={item => item.id.toString()}
+          contentContainerStyle={styles.container}
+        />
+      )}
       <View style={styles.buttonContainer}>
-      <ButtonPrototype
+        <ButtonPrototype
           label="Back"
           icon="arrow-back-circle-outline"
           Bsize={16}
           fn={() => navigation.goBack()}
-      />
+        />
       </View>
-    </ScrollView>
+      <StatusBar style="auto" />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
+    backgroundColor: '#f4f4f4',
   },
   container: {
     padding: 20,
@@ -95,5 +103,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     width: '100%',
+    paddingVertical: 10,
+  },
+  title: {
+    marginVertical: 20,
   },
 });

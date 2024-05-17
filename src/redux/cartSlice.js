@@ -1,10 +1,35 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 const initialState = {
   items: {},
   totalQuantity: 0,
-  totalAmount: 0
+  totalAmount: 0,
+  status: 'idle',
 };
+
+export const fetchCart = createAsyncThunk('cart/fetchCart', async (userId, { rejectWithValue }) => {
+  try {
+    const response = await fetch(`http://localhost:3000/cart/${userId}`);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return rejectWithValue(error.message);
+  }
+});
+
+export const updateCart = createAsyncThunk('cart/updateCart', async ({ userId, cart }, { rejectWithValue }) => {
+  try {
+    const response = await fetch(`http://localhost:3000/cart/${userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cart),
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return rejectWithValue(error.message);
+  }
+});
 
 const cartSlice = createSlice({
   name: 'cart',
@@ -37,9 +62,30 @@ const cartSlice = createSlice({
       delete state.items[id];
       state.totalQuantity -= removedQuantity;
       state.totalAmount -= removedAmount;
-    }
-  }
+    },
+    clearCart(state) {
+      state.items = {};
+      state.totalQuantity = 0;
+      state.totalAmount = 0;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchCart.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(fetchCart.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.items = action.payload.items;
+        state.totalQuantity = action.payload.totalQuantity;
+        state.totalAmount = action.payload.totalAmount;
+      })
+      .addCase(fetchCart.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+      });
+  },
 });
 
-export const { addItemToCart, removeItemFromCart, clearItemFromCart } = cartSlice.actions;
+export const { addItemToCart, removeItemFromCart, clearItemFromCart, clearCart } = cartSlice.actions;
 export default cartSlice.reducer;
