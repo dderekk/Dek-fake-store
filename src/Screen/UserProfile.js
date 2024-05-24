@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Button, TextInput, Alert, StyleSheet, ScrollView, Platform } from 'react-native';
+import { View, Text, TextInput, Alert, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearUser, setUser } from '../redux/userSlice';
 import { COLORS } from '../component/Color';
@@ -54,36 +54,48 @@ const UserProfile = () => {
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
         <Title text="Profile" />
-        {isEditing ? (
-          <>
-            <TextInput
-              style={styles.input}
-              placeholder="Name"
-              value={name}
-              onChangeText={setName}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-            <View style={styles.buttonContainer}>
-              <Button title="Cancel" onPress={() => setIsEditing(false)} />
-              <Button title="Confirm" onPress={handleUpdate} />
-            </View>
-          </>
-        ) : (
-          <>
-            <Text style={styles.info}>Name: {user.name}</Text>
-            <Text style={styles.info}>Email: {user.email}</Text>
-            <View style={styles.buttonContainer}>
-              <Button title="Update" onPress={() => setIsEditing(true)} />
-              <Button title="Sign Out" onPress={handleSignOut} />
-            </View>
-          </>
-        )}
+        <View style={styles.profileBox}>
+          {isEditing ? (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Name"
+                value={name}
+                onChangeText={setName}
+                placeholderTextColor="#888"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                placeholderTextColor="#888"
+              />
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.cancelButton} onPress={() => setIsEditing(false)}>
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.confirmButton} onPress={handleUpdate}>
+                  <Text style={styles.buttonText}>Confirm</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.info}>Name: {user.name}</Text>
+              <Text style={styles.info}>Email: {user.email}</Text>
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.updateButton} onPress={() => setIsEditing(true)}>
+                  <Text style={styles.buttonText}>Update</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+                  <Text style={styles.buttonText}>Sign Out</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </View>
       </View>
     </ScrollView>
   );
@@ -99,22 +111,72 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: COLORS.ProfileBackground,
   },
+  profileBox: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 10,
+    elevation: 2,
+  },
   info: {
     fontSize: 18,
-    marginBottom: 10,
+    marginBottom: 20,
+    color: '#333',
   },
   input: {
-    height: 40,
-    borderColor: 'gray',
+    height: 50,
+    borderColor: '#ccc',
     borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-    borderRadius: 5,
+    marginBottom: 20,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    fontSize: 16,
+    color: '#333',
+    backgroundColor: '#fff',
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
+  },
+  updateButton: {
+    flex: 1,
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  signOutButton: {
+    flex: 1,
+    backgroundColor: '#f44336',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#ccc',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  confirmButton: {
+    flex: 1,
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

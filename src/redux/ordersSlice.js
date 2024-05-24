@@ -1,4 +1,9 @@
+// ordersSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { Platform } from 'react-native';
+
+const server = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
+const url = `http://${server}:3000`;
 
 const initialState = {
   orders: [],
@@ -6,18 +11,39 @@ const initialState = {
   error: null,
 };
 
-export const fetchOrders = createAsyncThunk('orders/fetchOrders', async (userId) => {
-  const response = await fetch(`http://localhost:3000/orders?userId=${userId}`);
-  return response.json();
+export const fetchOrders = createAsyncThunk('orders/fetchOrders', async (token) => {
+  const response = await fetch(`${url}/orders/all`, {
+    method: 'GET',
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  const data = await response.json();
+
+  if (data.status !== 'OK') {
+    throw new Error(data.message || 'Failed to fetch orders.');
+  }
+
+  return data.orders.map(order => ({
+    ...order,
+    order_items: JSON.parse(order.order_items)
+  }));
 });
 
-export const updateOrderStatus = createAsyncThunk('orders/updateOrderStatus', async ({ orderId, status }) => {
-  const response = await fetch(`http://localhost:3000/orders/${orderId}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status }),
+export const updateOrderStatus = createAsyncThunk('orders/updateOrderStatus', async ({ orderId, isPaid, isDelivered, token }) => {
+  const response = await fetch(`${url}/orders/updateorder`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ orderID: orderId, isPaid, isDelivered }),
   });
-  return response.json();
+  const data = await response.json();
+  
+  if (data.status !== 'OK') {
+    throw new Error(data.message || 'Failed to update order status.');
+  }
+
+  return { orderId, isPaid, isDelivered };
 });
 
 const ordersSlice = createSlice({
@@ -42,10 +68,11 @@ const ordersSlice = createSlice({
         state.error = action.error.message;
       })
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
-        const updatedOrder = action.payload;
-        const index = state.orders.findIndex((order) => order.id === updatedOrder.id);
+        const { orderId, isPaid, isDelivered } = action.payload;
+        const index = state.orders.findIndex(order => order.id === orderId);
         if (index !== -1) {
-          state.orders[index] = updatedOrder;
+          state.orders[index].is_paid = isPaid;
+          state.orders[index].is_delivered = isDelivered;
         }
       });
   },

@@ -1,24 +1,26 @@
-// MyOrders.js
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, Image, ActivityIndicator, Alert } from 'react-native';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { Title } from '../component/Title';
 import { Platform } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
+import { fetchOrders, updateOrderStatus } from '../redux/ordersSlice';
 
 const server = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 const url = `http://${server}:3000`;
 
 function MyOrders() {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedOrders, setExpandedOrders] = useState({});
-  const [expandedSections, setExpandedSections] = useState({});
+  const dispatch = useDispatch();
+  const orders = useSelector(state => state.orders.orders);
+  const loading = useSelector(state => state.orders.loading);
   const user = useSelector(state => state.user);
   const isFocused = useIsFocused();
 
-  const fetchOrders = async () => {
+  const [expandedOrders, setExpandedOrders] = useState({});
+  const [expandedSections, setExpandedSections] = useState({});
+
+  const fetchOrdersData = async () => {
     try {
       const response = await fetch(`${url}/orders/all`, {
         method: 'GET',
@@ -45,36 +47,14 @@ function MyOrders() {
 
   useEffect(() => {
     if (isFocused) {
-      fetchOrders();
+      dispatch(fetchOrders(user.token));
     }
-  }, [isFocused, user.token]);
+  }, [isFocused, user.token, dispatch]);
 
-  const updateOrderStatus = async (orderId, isPaid, isDelivered) => {
+  const handleUpdateOrderStatus = async (orderId, isPaid, isDelivered) => {
     try {
-      const response = await fetch(`${url}/orders/updateorder`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}`
-        },
-        body: JSON.stringify({
-          orderID: orderId,
-          isPaid: isPaid,
-          isDelivered: isDelivered
-        })
-      });
-
-      const data = await response.json();
-      console.log('Update Order Response:', data);
-
-      if (data.status === 'OK') {
-        Alert.alert('Success', isDelivered ? 'Your order is delivered' : 'Your order is paid');
-        setOrders(prevOrders => prevOrders.map(order => 
-          order.id === orderId ? { ...order, is_paid: isPaid, is_delivered: isDelivered } : order
-        ));
-      } else {
-        Alert.alert('Error', data.message || 'Failed to update the order status.');
-      }
+      await dispatch(updateOrderStatus({ orderId, isPaid, isDelivered, token: user.token })).unwrap();
+      Alert.alert('Success', isDelivered ? 'Your order is delivered' : 'Your order is paid');
     } catch (error) {
       console.error('Error updating order status:', error.message);
       Alert.alert('Error', 'Failed to update the order status.');
@@ -85,6 +65,13 @@ function MyOrders() {
     setExpandedOrders(prevState => ({
       ...prevState,
       [orderId]: !prevState[orderId]
+    }));
+  };
+
+  const toggleSectionExpansion = (section) => {
+    setExpandedSections(prevState => ({
+      ...prevState,
+      [section]: !prevState[section]
     }));
   };
 
@@ -111,12 +98,12 @@ function MyOrders() {
               <Text style={styles.errorText}>Order items is not an array: {JSON.stringify(item.order_items)}</Text>
             )}
             {!item.is_paid && !item.is_delivered && (
-              <TouchableOpacity onPress={() => updateOrderStatus(item.id, 1, 0)} style={styles.payButton}>
+              <TouchableOpacity onPress={() => handleUpdateOrderStatus(item.id, 1, 0)} style={styles.payButton}>
                 <Text style={styles.buttonText}>Pay</Text>
               </TouchableOpacity>
             )}
             {!!item.is_paid && !item.is_delivered && (
-              <TouchableOpacity onPress={() => updateOrderStatus(item.id, 1, 1)} style={styles.receiveButton}>
+              <TouchableOpacity onPress={() => handleUpdateOrderStatus(item.id, 1, 1)} style={styles.receiveButton}>
                 <Text style={styles.buttonText}>Receive</Text>
               </TouchableOpacity>
             )}
@@ -124,13 +111,6 @@ function MyOrders() {
         )}
       </View>
     );
-  };
-
-  const toggleSectionExpansion = (section) => {
-    setExpandedSections(prevState => ({
-      ...prevState,
-      [section]: !prevState[section]
-    }));
   };
 
   const renderOrdersByStatus = (status, label) => {

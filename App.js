@@ -62,7 +62,7 @@ function TabsNavigator() {
     return true;
   };
 
-  const newOrdersCount = orders.filter(order => order.status === 'new').length;
+  const newOrdersCount = orders.filter(order => !order.is_paid && !order.is_delivered).length;
 
   return (
     <Tabs.Navigator screenOptions={{ headerShown: false }}>
@@ -113,7 +113,7 @@ function TabsNavigator() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="clipboard-outline" color={color} size={size} />
           ),
-          tabBarBadge: newOrdersCount > 0 ? newOrdersCount : undefined
+          tabBarBadge: user.isLoggedIn && newOrdersCount > 0 ? newOrdersCount : undefined
         }}
       />
       <Tabs.Screen 
