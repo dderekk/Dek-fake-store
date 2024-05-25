@@ -6,6 +6,7 @@ import { removeItemFromCart, addItemToCart, clearItemFromCart } from '../redux/c
 import { Ionicons } from '@expo/vector-icons';
 import { Title } from '../component/Title';
 import { Platform } from 'react-native';
+import { fetchOrders } from '../redux/ordersSlice';
 
 const server = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 const url = `http://${server}:3000`;
@@ -54,6 +55,7 @@ export function Cart() {
       if (data.status === 'OK') {
         Alert.alert('Order Created', 'Your order has been created successfully.');
         Object.keys(items).forEach(id => dispatch(clearItemFromCart(id)));
+        dispatch(fetchOrders(user.token));
       } else {
         Alert.alert('Error', data.message || 'Failed to create the order.');
       }

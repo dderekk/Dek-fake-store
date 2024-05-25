@@ -4,7 +4,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { Title } from '../component/Title';
 import { Platform } from 'react-native';
-import { useIsFocused } from '@react-navigation/native';
 import { fetchOrders, updateOrderStatus } from '../redux/ordersSlice';
 
 const server = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
@@ -15,41 +14,15 @@ function MyOrders() {
   const orders = useSelector(state => state.orders.orders);
   const loading = useSelector(state => state.orders.loading);
   const user = useSelector(state => state.user);
-  const isFocused = useIsFocused();
 
   const [expandedOrders, setExpandedOrders] = useState({});
   const [expandedSections, setExpandedSections] = useState({});
 
-  const fetchOrdersData = async () => {
-    try {
-      const response = await fetch(`${url}/orders/all`, {
-        method: 'GET',
-        headers: { 'Authorization': `Bearer ${user.token}` },
-      });
-      const data = await response.json();
-
-      if (data.status === 'OK') {
-        const parsedOrders = data.orders.map(order => ({
-          ...order,
-          order_items: JSON.parse(order.order_items)
-        }));
-        setOrders(parsedOrders);
-      } else {
-        Alert.alert('Error', data.message || 'Failed to fetch orders.');
-      }
-    } catch (error) {
-      console.error('Error fetching orders:', error.message);
-      Alert.alert('Error', 'Failed to fetch orders.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (isFocused) {
+    if (user.isLoggedIn) {
       dispatch(fetchOrders(user.token));
     }
-  }, [isFocused, user.token, dispatch]);
+  }, [user.isLoggedIn, user.token, dispatch]);
 
   const handleUpdateOrderStatus = async (orderId, isPaid, isDelivered) => {
     try {

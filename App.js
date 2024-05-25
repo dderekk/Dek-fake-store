@@ -1,5 +1,5 @@
 // App.js
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Provider, useSelector, useDispatch } from 'react-redux';
 import { store } from './src/redux/store';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +15,7 @@ import SignUp from './src/Screen/SignUp';
 import SignIn from './src/Screen/SignIn';
 import UserProfile from './src/Screen/UserProfile';
 import MyOrders from './src/Screen/MyOrders';
+import { fetchOrders } from './src/redux/ordersSlice';
 import { setUser } from './src/redux/userSlice';
 
 const Stack = createStackNavigator();
@@ -45,6 +46,12 @@ function TabsNavigator() {
   const orders = useSelector(state => state.orders.orders);
   const dispatch = useDispatch();
 
+  useEffect(() => {
+    if (user.isLoggedIn) {
+      dispatch(fetchOrders(user.token)); // Fetch orders when the user logs in
+    }
+  }, [user.isLoggedIn, dispatch]);
+
   const handleProtectedNavigation = (routeName, navigation) => {
     if (!user.isLoggedIn) {
       Alert.alert(
@@ -67,7 +74,7 @@ function TabsNavigator() {
   return (
     <Tabs.Navigator screenOptions={{ headerShown: false }}>
       <Tabs.Screen 
-        name="Products" 
+        name="Product" 
         component={HomeStackNavigator} 
         listeners={({ navigation }) => ({
           tabPress: e => {
